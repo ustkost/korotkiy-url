@@ -9,7 +9,10 @@ import (
 )
 
 func main() {
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
 	mux := handler.NewRouter()
 
 	log.Printf("listening on :%s\n", cfg.Port);
