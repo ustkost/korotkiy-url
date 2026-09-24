@@ -2,7 +2,11 @@ package repository
 
 import (
 	"context"
+	"errors"
+
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgerrcode"
 	"github.com/ustkost/korotkiy-url/internal/model"
 )
 
@@ -23,6 +27,10 @@ func (r *ClickRepository) Create(ctx context.Context, click *model.Click) error 
 	err := r.pool.QueryRow(ctx, query, click.LinkID, click.Referrer).
 		Scan(&click.ID, &click.Timestamp)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.ForeignKeyViolation {
+			return ErrNotFound
+		}
 		return err
 	}
 	return nil
