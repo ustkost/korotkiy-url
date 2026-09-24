@@ -10,11 +10,6 @@ import (
 	"github.com/ustkost/korotkiy-url/internal/model"
 )
 
-var (
-	ErrNotFound     = errors.New("not found")
-	ErrDuplicateCode = errors.New("short code already in use")
-)
-
 type LinkRepository struct {
 	pool *pgxpool.Pool
 }
