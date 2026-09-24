@@ -10,6 +10,11 @@ import (
 	"github.com/ustkost/korotkiy-url/internal/model"
 )
 
+var (
+	ErrNotFound     = errors.New("not found")
+	ErrDuplicateCode = errors.New("short code already in use")
+)
+
 type LinkRepository struct {
 	pool *pgxpool.Pool
 }
@@ -78,32 +83,44 @@ func (r *LinkRepository) List(ctx context.Context, limit, offset int) ([]model.L
 	return links, rows.Err()
 }
 
-func (r *LinkRepository) UpdateOriginalURL(ctx context.Context, id int64, originalURL string) error {
-	query := `UPDATE links SET original_url = $1 WHERE id = $2`
-	tag, err := r.pool.Exec(ctx, query, originalURL, id)
+func (r *LinkRepository) UpdateOriginalURL(ctx context.Context, id int64, originalURL string) (*model.Link, error) {
+	query := `
+		UPDATE links SET original_url = $1
+		WHERE id = $2
+		RETURNING id, short_code, original_url, created_at
+	`
+	var link model.Link
+	err := r.pool.QueryRow(ctx, query, originalURL, id).
+		Scan(&link.ID, &link.ShortCode, &link.OriginalURL, &link.CreatedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrNotFound
+	}
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if tag.RowsAffected() == 0 {
-		return ErrNotFound
-	}
-	return nil
+	return &link, nil
 }
 
-func (r *LinkRepository) UpdateShortCode(ctx context.Context, id int64, shortCode string) error {
-	query := `UPDATE links SET short_code = $1 WHERE id = $2`
-	tag, err := r.pool.Exec(ctx, query, shortCode, id)
+func (r *LinkRepository) UpdateShortCode(ctx context.Context, id int64, shortCode string) (*model.Link, error) {
+	query := `
+		UPDATE links SET short_code = $1
+		WHERE id = $2
+		RETURNING id, short_code, original_url, created_at
+	`
+	var link model.Link
+	err := r.pool.QueryRow(ctx, query, shortCode, id).
+		Scan(&link.ID, &link.ShortCode, &link.OriginalURL, &link.CreatedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrNotFound
+	}
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-				return ErrDuplicateCode
+			return nil, ErrDuplicateCode
 		}
-		return err
+		return nil, err
 	}
-	if tag.RowsAffected() == 0 {
-		return ErrNotFound
-	}
-	return nil
+	return &link, nil
 }
 
 func (r *LinkRepository) Delete(ctx context.Context, id int64) error {
