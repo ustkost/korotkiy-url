@@ -25,6 +25,13 @@ const (
 	codeCharset      = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
 )
 
+type LinkList struct {
+	Links  []model.Link `json:"links"`
+	Total  int64        `json:"total"`
+	Limit  int          `json:"limit"`
+	Offset int          `json:"offset"`
+}
+
 type LinkService struct {
 	repo *repository.LinkRepository
 }
@@ -41,7 +48,7 @@ func validateURL(rawURL string) error {
 	return nil
 }
 
-func (s *LinkService) CreateLink(ctx context.Context, originalURL, customCode string) (*model.Link, error) {
+func (s *LinkService) Create(ctx context.Context, originalURL, customCode string) (*model.Link, error) {
 	if err := validateURL(originalURL); err != nil {
 		return nil, err
 	}
@@ -67,7 +74,7 @@ func (s *LinkService) createWithCustomCode(ctx context.Context, originalURL, cus
 }
 
 func withGeneratedCode(fn func(code string) (*model.Link, error)) (*model.Link, error) {
-	for i := 0; i < maxCreateRetries; i++ {
+	for range maxCreateRetries {
 		code, err := generateShortCode(autoCodeLength)
 		if err != nil {
 			return nil, err
@@ -112,8 +119,30 @@ func (s *LinkService) GetByShortCode(ctx context.Context, shortCode string) (*mo
 	return s.repo.GetByShortCode(ctx, shortCode)
 }
 
-func (s *LinkService) List(ctx context.Context, limit, offset int) ([]model.Link, error) {
-	return s.repo.List(ctx, limit, offset)
+func (s *LinkService) List(ctx context.Context, limit, offset int) (*LinkList, error) {
+	if limit <= 0 || limit > maxListLimit {
+		return nil, ErrInvalidLimit
+	}
+	if offset < 0 {
+		return nil, ErrInvalidOffset
+	}
+
+	links, err := s.repo.List(ctx, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	total, err := s.repo.Count(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &LinkList{
+		Links:  links,
+		Total:  total,
+		Limit:  limit,
+		Offset: offset,
+	}, nil
 }
 
 func (s *LinkService) UpdateOriginalURL(ctx context.Context, id int64, originalURL string) (*model.Link, error) {

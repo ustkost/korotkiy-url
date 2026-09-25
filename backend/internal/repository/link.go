@@ -80,6 +80,16 @@ func (r *LinkRepository) List(ctx context.Context, limit, offset int) ([]model.L
 	return links, rows.Err()
 }
 
+func (r *LinkRepository) Count(ctx context.Context) (int64, error) {
+	query := `SELECT COUNT(*) FROM links`
+	var count int64
+	err := r.pool.QueryRow(ctx, query).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (r *LinkRepository) UpdateOriginalURL(ctx context.Context, id int64, originalURL string) (*model.Link, error) {
 	query := `
 		UPDATE links SET original_url = $1

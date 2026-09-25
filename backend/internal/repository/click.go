@@ -60,3 +60,13 @@ func (r *ClickRepository) ListByLinkID(ctx context.Context, linkID int64, limit,
 	}
 	return clicks, rows.Err()
 }
+
+func (r *ClickRepository) CountByLinkID(ctx context.Context, linkID int64) (int64, error) {
+	query := `SELECT COUNT(*) FROM clicks WHERE link_id = $1`
+	var count int64
+	err := r.pool.QueryRow(ctx, query, linkID).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
