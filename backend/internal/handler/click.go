@@ -1,11 +1,10 @@
 package handler
 
 import (
-	"net/http"
 	"encoding/json"
+	"net/http"
 
 	"github.com/ustkost/korotkiy-url/internal/service"
-
 )
 
 type ClickHandler struct {

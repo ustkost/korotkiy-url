@@ -3,10 +3,11 @@ package repository
 import (
 	"context"
 	"errors"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jackc/pgx/v5/pgconn"
+
 	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/ustkost/korotkiy-url/internal/model"
 )
 

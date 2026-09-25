@@ -4,9 +4,9 @@ import (
 	"context"
 	"crypto/rand"
 	"errors"
-	"regexp"
 	"math/big"
 	"net/url"
+	"regexp"
 
 	"github.com/ustkost/korotkiy-url/internal/model"
 	"github.com/ustkost/korotkiy-url/internal/repository"

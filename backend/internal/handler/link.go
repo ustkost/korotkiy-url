@@ -95,7 +95,7 @@ func (h *LinkHandler) UpdateOriginalURL(w http.ResponseWriter, r *http.Request) 
 		writeServiceError(w, err)
 		return
 	}
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(link)
 }
@@ -122,7 +122,7 @@ func (h *LinkHandler) UpdateShortCode(w http.ResponseWriter, r *http.Request) {
 		writeServiceError(w, err)
 		return
 	}
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(link)
 }

@@ -11,7 +11,11 @@ import (
 
 func writeServiceError(w http.ResponseWriter, err error) {
 	switch {
-	case errors.Is(err, service.ErrInvalidURL), errors.Is(err, service.ErrInvalidShortCode), errors.Is(err, service.ErrInvalidLimit), errors.Is(err, service.ErrInvalidOffset):
+	case errors.Is(err, service.ErrInvalidURL),
+		errors.Is(err, service.ErrInvalidShortCode),
+		errors.Is(err, service.ErrInvalidLimit),
+		errors.Is(err, service.ErrInvalidOffset):
+
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	case errors.Is(err, repository.ErrDuplicateCode):
 		http.Error(w, err.Error(), http.StatusConflict)

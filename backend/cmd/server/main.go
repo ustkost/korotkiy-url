@@ -37,5 +37,5 @@ func main() {
 	mux := handler.NewRouter(linkHandler, clickHandler, redirectHandler)
 
 	log.Printf("listening on :%s", cfg.Port)
-	log.Fatal(http.ListenAndServe(":" + cfg.Port, mux))
+	log.Fatal(http.ListenAndServe(":"+cfg.Port, mux))
 }

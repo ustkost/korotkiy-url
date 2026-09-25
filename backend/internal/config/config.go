@@ -1,12 +1,12 @@
 package config
 
 import (
-	"os"
 	"fmt"
+	"os"
 )
 
 type Config struct {
-	Port string
+	Port       string
 	DBHost     string
 	DBPort     string
 	DBUser     string
