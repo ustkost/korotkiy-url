@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/ustkost/korotkiy-url/internal/service"
@@ -32,7 +32,7 @@ func (h *RedirectHandler) Redirect(w http.ResponseWriter, r *http.Request) {
 	referrer := r.Header.Get("Referer")
 	go func() {
 		if err := h.clickService.RecordClick(context.Background(), link.ID, referrer); err != nil {
-			log.Printf("failed to record click for link %d: %v", link.ID, err)
+			slog.Error("failed to record click for link", "link_id", link.ID, "err", err)
 		}
 	}()
 

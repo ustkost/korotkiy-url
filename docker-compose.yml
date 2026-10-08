@@ -5,8 +5,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
@@ -19,16 +17,15 @@ services:
     build: ./backend
     environment:
       PORT: ${BACKEND_PORT}
+      LOG_LEVEL: ${LOG_LEVEL}
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       DB_NAME: ${POSTGRES_DB}
-    ports:
-      - "${BACKEND_PORT}:${BACKEND_PORT}"
     depends_on:
       db:
-          condition: service_healthy
+        condition: service_healthy
 
   migrate:
     image: migrate/migrate
@@ -41,7 +38,7 @@ services:
     ]
     depends_on:
       db:
-          condition: service_healthy
+        condition: service_healthy
 
   frontend:
     build: ./frontend

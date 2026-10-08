@@ -1,12 +1,15 @@
 package config
 
 import (
+	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 )
 
 type Config struct {
 	Port       string
+	LogLevel   slog.Level
 	DBHost     string
 	DBPort     string
 	DBUser     string
@@ -24,23 +27,29 @@ func Load() (*Config, error) {
 		DBName:     os.Getenv("DB_NAME"),
 	}
 
+	if v := os.Getenv("LOG_LEVEL"); v != "" {
+		if err := cfg.LogLevel.UnmarshalText([]byte(v)); err != nil {
+			return nil, fmt.Errorf("LOG_LEVEL: %w", err)
+		}
+	}
+
 	if cfg.Port == "" {
-		return nil, fmt.Errorf("Failed to get PORT env variable")
+		return nil, errors.New("PORT is required but not set")
 	}
 	if cfg.DBHost == "" {
-		return nil, fmt.Errorf("Failed to get DB_HOST env variable")
+		return nil, errors.New("DB_HOST is required but not set")
 	}
 	if cfg.DBPort == "" {
-		return nil, fmt.Errorf("Failed to get DB_PORT env variable")
+		return nil, errors.New("DB_PORT is required but not set")
 	}
 	if cfg.DBUser == "" {
-		return nil, fmt.Errorf("Failed to get DB_USER env variable")
+		return nil, errors.New("DB_USER is required but not set")
 	}
 	if cfg.DBPassword == "" {
-		return nil, fmt.Errorf("Failed to get DB_PASSWORD env variable")
+		return nil, errors.New("DB_PASSWORD is required but not set")
 	}
 	if cfg.DBName == "" {
-		return nil, fmt.Errorf("Failed to get DB_NAME env variable")
+		return nil, errors.New("DB_NAME is required but not set")
 	}
 
 	return cfg, nil

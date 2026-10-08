@@ -2,7 +2,7 @@ package handler
 
 import (
 	"errors"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/ustkost/korotkiy-url/internal/repository"
@@ -24,7 +24,7 @@ func writeServiceError(w http.ResponseWriter, err error) {
 	case errors.Is(err, service.ErrCodeGenerationFailed):
 		http.Error(w, "unable to generate a unique short code, please try again", http.StatusInternalServerError)
 	default:
-		log.Printf("unexpected error: %v", err)
+		slog.Error("unexpected error", "err", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 	}
 }

@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,15 +18,21 @@ import (
 
 func main() {
 	if err := run(); err != nil {
-		log.Fatal(err)
+		slog.Error("fatal", "err", err)
+		os.Exit(1)
 	}
 }
 
 func run() error {
+
 	cfg, err := config.Load()
 	if err != nil {
 		return err
 	}
+
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: cfg.LogLevel,
+	})))
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -49,11 +55,15 @@ func run() error {
 
 	mux := handler.NewRouter(linkHandler, clickHandler, redirectHandler)
 
-	srv := &http.Server{Addr: ":" + cfg.Port, Handler: mux}
+	srv := &http.Server{
+		Addr:              ":" + cfg.Port,
+		Handler:           handler.Logging(mux),
+		ReadHeaderTimeout: 5 * time.Second,
+	}
 
 	errCh := make(chan error, 1)
 	go func() {
-		log.Printf("listening on :%s", cfg.Port)
+		slog.Info("listening", "port", cfg.Port)
 		errCh <- srv.ListenAndServe()
 	}()
 
@@ -61,7 +71,7 @@ func run() error {
 	case err := <-errCh:
 		return err
 	case <-ctx.Done():
-		log.Println("shutting down...")
+		slog.Info("shutting down...")
 	}
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
