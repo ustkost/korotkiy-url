@@ -68,35 +68,39 @@
 	onMount(load);
 </script>
 
-<h1>Links</h1>
+<div class="page-head">
+  <h1>Links</h1>
+  <a href="/links/new" use:link class="button primary">+ Create Link</a>
 
-<a href="/links/new" use:link>+ Create Link</a>
+  {#if loading}
+    <p>Loading...</p>
+  {:else}
+    {#if error}
+      <p class="error">Error: {error}</p>
+    {/if}
 
-{#if loading}
-	<p>Loading...</p>
-{:else}
-	{#if error}
-		<p class="error">Error: {error}</p>
-	{/if}
+    <p>Total links: {total}</p>
+    <ul>
+      {#each links as l (l.id)}
+        <li>
+          <div class="link-info">
+            <strong>{l.short_code}</strong>
+            <span class="url">{l.original_url}</span>
+          </div>
+          <div class="actions">
+            <button on:click={() => copyLink(l)}>{copiedId === l.id ? 'Copied!' : 'Copy'}</button>
+            <a href="/links/{l.id}/edit" use:link>Edit</a>
+            <a href="/links/{l.id}/stats" use:link>Stats</a>
+            <button class="danger" on:click={() => handleDelete(l.id)}>Delete</button>
+          </div>
+        </li>
+      {/each}
+    </ul>
 
-	<p>Total links: {total}</p>
-	<ul>
-		{#each links as l (l.id)}
-      <li>
-        <strong>{l.short_code}</strong> → {l.original_url}
-        <button on:click={() => copyLink(l)}>
-          {copiedId === l.id ? 'Copied!' : 'Copy'}
-        </button>
-        <a href="/links/{l.id}/edit" use:link>Edit</a>
-        <a href="/links/{l.id}/stats" use:link>Stats</a>
-        <button on:click={() => handleDelete(l.id)}>Delete</button>
-      </li>
-		{/each}
-	</ul>
-
-	{#if links.length < total}
-		<button on:click={loadMore} disabled={loadingMore}>
-			{loadingMore ? 'Loading...' : 'Load more'}
-		</button>
-	{/if}
-{/if}
+    {#if links.length < total}
+      <button on:click={loadMore} disabled={loadingMore}>
+        {loadingMore ? 'Loading...' : 'Load more'}
+      </button>
+    {/if}
+  {/if}
+</div>

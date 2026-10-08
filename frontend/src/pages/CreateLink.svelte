@@ -38,7 +38,7 @@
 		<p class="error">{error}</p>
 	{/if}
 
-	<button type="submit" disabled={submitting}>
+	<button type="submit" disabled={submitting} class="primary">
 		{submitting ? 'Creating...' : 'Create'}
 	</button>
 </form>
