@@ -39,6 +39,24 @@ func (r *LinkRepository) Create(ctx context.Context, link *model.Link) error {
 	return nil
 }
 
+func (r *LinkRepository) GetByID(ctx context.Context, id int64) (*model.Link, error) {
+	query := `
+		SELECT id, short_code, original_url, created_at
+		FROM links
+		WHERE id = $1
+	`
+	var link model.Link
+	err := r.pool.QueryRow(ctx, query, id).
+		Scan(&link.ID, &link.ShortCode, &link.OriginalURL, &link.CreatedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &link, nil
+}
+
 func (r *LinkRepository) GetByShortCode(ctx context.Context, shortCode string) (*model.Link, error) {
 	query := `
 		SELECT id, short_code, original_url, created_at
@@ -70,7 +88,7 @@ func (r *LinkRepository) List(ctx context.Context, limit, offset int) ([]model.L
 	}
 	defer rows.Close()
 
-	var links []model.Link
+	links := []model.Link{}
 	for rows.Next() {
 		var link model.Link
 		if err := rows.Scan(&link.ID, &link.ShortCode, &link.OriginalURL, &link.CreatedAt); err != nil {

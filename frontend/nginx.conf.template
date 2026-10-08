@@ -5,6 +5,10 @@ server {
     proxy_pass http://backend:${BACKEND_PORT}/;
   }
 
+  location /s/ {
+    proxy_pass http://backend:${BACKEND_PORT}/s/;
+  }
+
   location / {
     root /usr/share/nginx/html;
     try_files $uri /index.html;

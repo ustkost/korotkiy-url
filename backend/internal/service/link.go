@@ -119,6 +119,10 @@ func (s *LinkService) GetByShortCode(ctx context.Context, shortCode string) (*mo
 	return s.repo.GetByShortCode(ctx, shortCode)
 }
 
+func (s *LinkService) GetByID(ctx context.Context, id int64) (*model.Link, error) {
+	return s.repo.GetByID(ctx, id)
+}
+
 func (s *LinkService) List(ctx context.Context, limit, offset int) (*LinkList, error) {
 	if limit <= 0 || limit > maxListLimit {
 		return nil, ErrInvalidLimit

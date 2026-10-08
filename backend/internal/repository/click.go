@@ -50,7 +50,7 @@ func (r *ClickRepository) ListByLinkID(ctx context.Context, linkID int64, limit,
 	}
 	defer rows.Close()
 
-	var clicks []model.Click
+	clicks := []model.Click{}
 	for rows.Next() {
 		var click model.Click
 		if err := rows.Scan(&click.ID, &click.LinkID, &click.Timestamp, &click.Referrer); err != nil {

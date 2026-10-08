@@ -61,9 +61,13 @@ func (h *LinkHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *LinkHandler) Get(w http.ResponseWriter, r *http.Request) {
-	shortCode := r.PathValue("shortCode")
+	id, err := parseInt64(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "id must be a valid integer", http.StatusBadRequest)
+		return
+	}
 
-	link, err := h.service.GetByShortCode(r.Context(), shortCode)
+	link, err := h.service.GetByID(r.Context(), id)
 	if err != nil {
 		writeServiceError(w, err)
 		return
