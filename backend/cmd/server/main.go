@@ -4,6 +4,10 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/ustkost/korotkiy-url/internal/config"
 	"github.com/ustkost/korotkiy-url/internal/db"
@@ -13,14 +17,23 @@ import (
 )
 
 func main() {
-	cfg, err := config.Load()
-	if err != nil {
+	if err := run(); err != nil {
 		log.Fatal(err)
 	}
+}
 
-	pool, err := db.Connect(context.Background(), cfg)
+func run() error {
+	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal(err)
+		return err
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	pool, err := db.Connect(ctx, cfg)
+	if err != nil {
+		return err
 	}
 	defer pool.Close()
 
@@ -36,6 +49,22 @@ func main() {
 
 	mux := handler.NewRouter(linkHandler, clickHandler, redirectHandler)
 
-	log.Printf("listening on :%s", cfg.Port)
-	log.Fatal(http.ListenAndServe(":"+cfg.Port, mux))
+	srv := &http.Server{Addr: ":" + cfg.Port, Handler: mux}
+
+	errCh := make(chan error, 1)
+	go func() {
+		log.Printf("listening on :%s", cfg.Port)
+		errCh <- srv.ListenAndServe()
+	}()
+
+	select {
+	case err := <-errCh:
+		return err
+	case <-ctx.Done():
+		log.Println("shutting down...")
+	}
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	return srv.Shutdown(shutdownCtx)
 }
