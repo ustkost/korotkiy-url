@@ -30,9 +30,21 @@ func run() error {
 		return err
 	}
 
-	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+	slogHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: cfg.LogLevel,
-	})))
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			if len(groups) == 0 {
+				switch a.Key {
+				case slog.TimeKey:
+					a.Key = "timestamp"
+				case slog.MessageKey:
+					a.Key = "message"
+				}
+			}
+			return a
+		},
+	})
+	slog.SetDefault(slog.New(slogHandler).With("service.name", "korotkiy-url-backend"))
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
