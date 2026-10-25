@@ -2,9 +2,13 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
+	"time"
 
+	"github.com/ustkost/korotkiy-url/internal/metrics"
+	"github.com/ustkost/korotkiy-url/internal/repository"
 	"github.com/ustkost/korotkiy-url/internal/service"
 )
 
@@ -21,10 +25,19 @@ func NewRedirectHandler(linkService *service.LinkService, clickService *service.
 }
 
 func (h *RedirectHandler) Redirect(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	defer func() {
+		metrics.RedirectDuration.Observe(time.Since(start).Seconds())
+	}()
 	shortCode := r.PathValue("shortCode")
 
 	link, err := h.linkService.GetByShortCode(r.Context(), shortCode)
 	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			metrics.RedirectsTotal.WithLabelValues("not_found").Inc()
+		} else {
+			metrics.RedirectsTotal.WithLabelValues("error").Inc()
+		}
 		writeServiceError(w, err)
 		return
 	}
@@ -37,4 +50,5 @@ func (h *RedirectHandler) Redirect(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	http.Redirect(w, r, link.OriginalURL, http.StatusFound)
+	metrics.RedirectsTotal.WithLabelValues("found").Inc()
 }

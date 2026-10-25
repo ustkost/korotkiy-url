@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"regexp"
 
+	"github.com/ustkost/korotkiy-url/internal/metrics"
 	"github.com/ustkost/korotkiy-url/internal/model"
 	"github.com/ustkost/korotkiy-url/internal/repository"
 )
@@ -52,10 +53,21 @@ func (s *LinkService) Create(ctx context.Context, originalURL, customCode string
 	if err := validateURL(originalURL); err != nil {
 		return nil, err
 	}
+
+	var link *model.Link
+	var err error
+
 	if customCode != "" {
-		return s.createWithCustomCode(ctx, originalURL, customCode)
+		link, err = s.createWithCustomCode(ctx, originalURL, customCode)
+	} else {
+		link, err = s.createWithGeneratedCode(ctx, originalURL)
 	}
-	return s.createWithGeneratedCode(ctx, originalURL)
+	if err != nil {
+		return nil, err
+	}
+
+	metrics.LinksCreated.Inc()
+	return link, nil
 }
 
 func (s *LinkService) createWithCustomCode(ctx context.Context, originalURL, customCode string) (*model.Link, error) {

@@ -8,23 +8,25 @@ import (
 )
 
 type Config struct {
-	Port       string
-	LogLevel   slog.Level
-	DBHost     string
-	DBPort     string
-	DBUser     string
-	DBPassword string
-	DBName     string
+	Port        string
+	MetricsPort string
+	LogLevel    slog.Level
+	DBHost      string
+	DBPort      string
+	DBUser      string
+	DBPassword  string
+	DBName      string
 }
 
 func Load() (*Config, error) {
 	cfg := &Config{
-		Port:       os.Getenv("PORT"),
-		DBHost:     os.Getenv("DB_HOST"),
-		DBPort:     os.Getenv("DB_PORT"),
-		DBUser:     os.Getenv("DB_USER"),
-		DBPassword: os.Getenv("DB_PASSWORD"),
-		DBName:     os.Getenv("DB_NAME"),
+		Port:        os.Getenv("PORT"),
+		MetricsPort: os.Getenv("METRICS_PORT"),
+		DBHost:      os.Getenv("DB_HOST"),
+		DBPort:      os.Getenv("DB_PORT"),
+		DBUser:      os.Getenv("DB_USER"),
+		DBPassword:  os.Getenv("DB_PASSWORD"),
+		DBName:      os.Getenv("DB_NAME"),
 	}
 
 	if v := os.Getenv("LOG_LEVEL"); v != "" {
@@ -34,6 +36,9 @@ func Load() (*Config, error) {
 	}
 
 	if cfg.Port == "" {
+		return nil, errors.New("PORT is required but not set")
+	}
+	if cfg.MetricsPort == "" {
 		return nil, errors.New("PORT is required but not set")
 	}
 	if cfg.DBHost == "" {

@@ -11,13 +11,19 @@ spec:
     metadata:
       labels:
         app: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
     spec:
       containers:
         - name: backend
-          image: korotkiy-url-backend:latest
+          image: korotkiy-url-backend:v3
           imagePullPolicy: Never
           ports:
             - containerPort: 8080
+            - name: metrics
+              containerPort: 9090
           envFrom:
             - configMapRef:
                 name: app-config

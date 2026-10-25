@@ -24,6 +24,10 @@ spec:
     metadata:
       labels:
         app: db
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9187"
+        prometheus.io/path: "/metrics"
     spec:
       containers:
         - name: postgres
@@ -44,6 +48,23 @@ spec:
             initialDelaySeconds: 3
             periodSeconds: 2
             failureThreshold: 10
+        - name: postgres-exporter
+          image: quay.io/prometheuscommunity/postgres-exporter
+          ports:
+            - name: metrics
+              containerPort: 9187
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: db-credentials
+          env:
+            - name: DATA_SOURCE_URI
+              value: "localhost:5432/$(POSTGRES_DB)?sslmode=disable"
+            - name: DATA_SOURCE_USER
+              value: "$(POSTGRES_USER)"
+            - name: DATA_SOURCE_PASS
+              value: "$(POSTGRES_PASSWORD)"
       volumes:
         - name: data
           persistentVolumeClaim:
