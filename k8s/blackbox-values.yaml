@@ -1,0 +1,11 @@
+fullnameOverride: blackbox-exporter
+
+config:
+  modules:
+    http_redirect:
+      prober: http
+      timeout: 5s
+      http:
+        method: GET
+        no_follow_redirects: true
+        valid_status_codes: [302]

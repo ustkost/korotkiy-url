@@ -28,7 +28,6 @@ func main() {
 }
 
 func run() error {
-
 	cfg, err := config.Load()
 	if err != nil {
 		return err
@@ -70,6 +69,9 @@ func run() error {
 	redirectHandler := handler.NewRedirectHandler(linkService, clickService)
 
 	metrics.RegisterLinksGauge(ctx, linkRepo.Count)
+	metrics.RedirectsTotal.WithLabelValues("found").Add(0)
+	metrics.RedirectsTotal.WithLabelValues("not_found").Add(0)
+	metrics.RedirectsTotal.WithLabelValues("error").Add(0)
 
 	mux := handler.NewRouter(linkHandler, clickHandler, redirectHandler)
 
@@ -79,8 +81,10 @@ func run() error {
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
+	handler.InitChaos()
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())
+	metricsMux.HandleFunc("/admin/chaos", handler.ChaosHandler)
 
 	metricsSrv := &http.Server{
 		Addr:              ":" + cfg.MetricsPort,

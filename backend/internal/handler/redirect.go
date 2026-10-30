@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
+	"math/rand"
 
 	"github.com/ustkost/korotkiy-url/internal/metrics"
 	"github.com/ustkost/korotkiy-url/internal/repository"
@@ -29,6 +30,15 @@ func (h *RedirectHandler) Redirect(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		metrics.RedirectDuration.Observe(time.Since(start).Seconds())
 	}()
+
+	if d := slowMs.Load(); d > 0 {
+		time.Sleep(time.Duration(d) * time.Millisecond)
+	}
+	if rand.Int63n(100) < failPercent.Load() {
+		metrics.RedirectsTotal.WithLabelValues("error").Inc()
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
 	shortCode := r.PathValue("shortCode")
 
 	link, err := h.linkService.GetByShortCode(r.Context(), shortCode)

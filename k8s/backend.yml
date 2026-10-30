@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: korotkiy-url-backend:v3
+          image: korotkiy-url-backend:v4
           imagePullPolicy: Never
           ports:
             - containerPort: 8080
@@ -52,5 +52,9 @@ spec:
   selector:
     app: backend
   ports:
-    - port: 8080
+    - name: "http"
+      port: 8080
       targetPort: 8080
+    - name: "metrics"
+      port: 9090
+      targetPort: 9090
