@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: korotkiy-url-backend:v4
+          image: korotkiy-url/backend:1.0.0
           imagePullPolicy: Never
           ports:
             - containerPort: 8080

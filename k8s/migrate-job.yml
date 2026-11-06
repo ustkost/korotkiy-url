@@ -9,7 +9,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: migrate
-          image: korotkiy-url-migrate:latest
+          image: korotkiy-url/migrate:1.0.0
           imagePullPolicy: Never
           args:
             - "-path"

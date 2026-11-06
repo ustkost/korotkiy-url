@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: korotkiy-url-frontend:latest
+          image: korotkiy-url/frontend:1.0.0
           imagePullPolicy: Never
           ports:
             - containerPort: 80

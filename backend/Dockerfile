@@ -5,8 +5,10 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 go build -o server ./cmd/server
 
-FROM alpine:latest
+FROM alpine:3.24.4
+RUN adduser -D app
 WORKDIR /app
-COPY --from=builder /app/server .
+COPY --from=builder --chown=app:app /app/server .
+USER app
 EXPOSE 8080
 CMD ["./server"]
