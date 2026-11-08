@@ -2,10 +2,11 @@ package handler
 
 import "net/http"
 
-func NewRouter(linkHandler *LinkHandler, clickHandler *ClickHandler, redirectHandler *RedirectHandler) *http.ServeMux {
+func NewRouter(healthHandler *HealthHandler, linkHandler *LinkHandler, clickHandler *ClickHandler, redirectHandler *RedirectHandler) *http.ServeMux {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /health", Health)
+	mux.HandleFunc("GET /livez", healthHandler.Live)
+	mux.HandleFunc("GET /readyz", healthHandler.Ready)
 
 	mux.HandleFunc("POST /links", linkHandler.Create)
 	mux.HandleFunc("GET /links", linkHandler.List)

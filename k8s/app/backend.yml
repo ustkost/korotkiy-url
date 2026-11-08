@@ -2,8 +2,14 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
+  namespace: app
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       app: backend
@@ -18,10 +24,11 @@ spec:
     spec:
       containers:
         - name: backend
-          image: korotkiy-url/backend:1.0.0
+          image: korotkiy-url/backend:1.1.0
           imagePullPolicy: Never
           ports:
-            - containerPort: 8080
+            - name: api
+              containerPort: 8080
             - name: metrics
               containerPort: 9090
           envFrom:
@@ -38,23 +45,39 @@ spec:
               value: "$(POSTGRES_PASSWORD)"
             - name: DB_NAME
               value: "$(POSTGRES_DB)"
+          startupProbe:
+            httpGet: { path: /readyz, port: 8080 }
+            periodSeconds: 2
+            failureThreshold: 30
+          livenessProbe:
+            httpGet: { path: /livez, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
           readinessProbe:
-            tcpSocket:
-              port: 8080
-            initialDelaySeconds: 2
-            periodSeconds: 3
+            httpGet: { path: /readyz, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 2
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: backend
+  namespace: app
 spec:
   selector:
     app: backend
   ports:
-    - name: "http"
+    - name: api
       port: 8080
       targetPort: 8080
-    - name: "metrics"
+    - name: metrics
       port: 9090
       targetPort: 9090

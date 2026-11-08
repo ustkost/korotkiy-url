@@ -20,12 +20,22 @@ func (r *statusRecorder) Unwrap() http.ResponseWriter {
 	return r.ResponseWriter
 }
 
+const (
+	PathLive  = "/livez"
+	PathReady = "/readyz"
+)
+
 func Logging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
 
 		next.ServeHTTP(rec, r)
+
+		isProbe := r.URL.Path == PathLive || r.URL.Path == PathReady
+		if isProbe && rec.status == http.StatusOK {
+			return // успешные пробы не логируем
+		}
 
 		slog.Info("request",
 			"method", r.Method,

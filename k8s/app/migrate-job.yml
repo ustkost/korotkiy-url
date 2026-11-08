@@ -2,6 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: migrate
+  namespace: app
 spec:
   backoffLimit: 10
   template:
