@@ -25,6 +25,22 @@ var (
 		Name: "korotkiy_url_redirect_duration_seconds",
 		Help: "Redirect duration",
 	})
+
+	HttpRequests = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "http_requests_total",
+		Help: "Total number of HTTP requests",
+	}, []string{"method", "route", "code"})
+
+	HttpDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "http_request_duration_seconds",
+		Help:    "HTTP request duration in seconds",
+		Buckets: []float64{0.0005, 0.001, 0.002, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1},
+	}, []string{"method", "route"})
+
+	HttpInFlight = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "http_requests_in_flight",
+		Help: "Number of HTTP requests currently being served",
+	})
 )
 
 func RegisterLinksGauge(ctx context.Context, count func(ctx context.Context) (int64, error)) {

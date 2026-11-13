@@ -104,7 +104,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool) *App {
 
 	a.apiSrv = &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           handler.Logging(mux),
+		Handler:           handler.Metrics(handler.Logging(mux)),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 	a.metricsSrv = &http.Server{

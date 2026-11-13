@@ -3,7 +3,10 @@ package handler
 import (
 	"log/slog"
 	"net/http"
+	"strconv"
 	"time"
+
+	"github.com/ustkost/korotkiy-url/internal/metrics"
 )
 
 type statusRecorder struct {
@@ -34,7 +37,7 @@ func Logging(next http.Handler) http.Handler {
 
 		isProbe := r.URL.Path == PathLive || r.URL.Path == PathReady
 		if isProbe && rec.status == http.StatusOK {
-			return // успешные пробы не логируем
+			return
 		}
 
 		slog.Info("request",
@@ -43,5 +46,29 @@ func Logging(next http.Handler) http.Handler {
 			"status", rec.status,
 			"duration_ms", time.Since(start).Milliseconds(),
 		)
+	})
+}
+
+func Metrics(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == PathLive || r.URL.Path == PathReady {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		start := time.Now()
+		metrics.HttpInFlight.Inc()
+		defer metrics.HttpInFlight.Dec()
+
+		rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
+		next.ServeHTTP(rec, r)
+
+		route := r.Pattern
+		if route == "" {
+			route = "unmatched"
+		}
+
+		metrics.HttpRequests.WithLabelValues(r.Method, route, strconv.Itoa(rec.status)).Inc()
+		metrics.HttpDuration.WithLabelValues(r.Method, route).Observe(time.Since(start).Seconds())
 	})
 }
