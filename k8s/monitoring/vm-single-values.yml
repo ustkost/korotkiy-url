@@ -1,0 +1,19 @@
+server:
+  scrape:
+    enabled: true
+    extraScrapeConfigs:
+      - job_name: backend-redirect
+        scrape_interval: 15s
+        metrics_path: /probe
+        params:
+          module: [http_redirect]
+        static_configs:
+          - targets:
+              - http://backend.app.svc:8080/s/kuber
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: blackbox-exporter.monitoring.svc:9115

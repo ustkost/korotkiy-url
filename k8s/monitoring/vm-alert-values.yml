@@ -1,0 +1,107 @@
+server:
+  datasource:
+    url: "http://vms-victoria-metrics-single-server.monitoring.svc.cluster.local:8428"
+  config:
+    alerts:
+      groups:
+        - name: korotkiy-url
+          rules:
+            - alert: RedirectErrorRateHigh
+              expr: |
+                sum(rate(korotkiy_url_redirects_total{result="error"}[5m]))
+                /
+                sum(rate(korotkiy_url_redirects_total[5m]))
+                > 0.05
+              for: 5m
+              labels:
+                severity: critical
+              annotations:
+                summary: "over 5% of the redirects fail"
+
+            - alert: RedirectLatencyHigh
+              expr: |
+                histogram_quantile(0.95,
+                  sum by (le) (rate(korotkiy_url_redirect_duration_seconds_bucket[5m])))
+                > 0.5
+              for: 5m
+              labels:
+                severity: warning
+              annotations:
+                summary: "redirect p95 > 500ms"
+
+        - name: korotkiy-url-runtime
+          rules:
+            - alert: CPUHigh
+              expr: rate(process_cpu_seconds_total{job="kubernetes-pods", app="backend"}[5m]) > 0.8
+              for: 5m
+              labels:
+                severity: warning
+              annotations:
+                summary: ">80% cpu used"
+
+            - alert: MemoryHigh
+              expr: process_resident_memory_bytes{job="kubernetes-pods", app="backend"} > 200 * 1024 * 1024
+              for: 5m
+              labels:
+                severity: warning
+              annotations:
+                summary: ">200mb memory used"
+
+            - alert: GoroutinesHigh
+              expr: go_goroutines{job="kubernetes-pods", app="backend"} > 500
+              for: 5m
+              labels:
+                severity: warning
+              annotations:
+                summary: "goroutines count > 500"
+
+        - name: korotkiy-url-probe
+          rules:
+            - alert: RedirectProbeFailed
+              expr: probe_success{job="backend-redirect"} == 0
+              for: 2m
+              labels:
+                severity: critical
+              annotations:
+                summary: "redirect probe failing"
+
+            - alert: RedirectProbeSlow
+              expr: probe_duration_seconds{job="backend-redirect"} > 1
+              for: 5m
+              labels:
+                severity: warning
+              annotations:
+                summary: "redirect probe slower than 1s"
+
+alertmanager:
+  enabled: true
+  config:
+    route:
+      receiver: telegram
+      group_by: [alertname]
+      group_interval: 5m
+      repeat_interval: 4h
+      routes:
+        - matchers:
+            - severity="critical"
+          receiver: telegram
+          repeat_interval: 1h
+
+    receivers: 
+      - name: telegram
+        telegram_configs:
+          - bot_token_file: /etc/telegram/token
+            chat_id: 5091510734
+            parse_mode: HTML
+            send_resolved: true
+            message: |-
+              {{ if eq .Status "firing" }}FIRING{{ else }}RESOLVED{{ end }} {{ .CommonLabels.alertname }} [{{ .CommonLabels.severity }}]
+              {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}
+  extraVolumes:
+    - name: telegram-token
+      secret:
+        secretName: telegram-bot
+  extraVolumeMounts:
+    - name: telegram-token
+      mountPath: /etc/telegram
+      readOnly: true
