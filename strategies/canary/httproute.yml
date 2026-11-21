@@ -1,0 +1,16 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: default-route
+  namespace: app
+spec:
+  parentRefs:
+    - name: default-gateway
+  rules:
+    - backendRefs:
+        - name: backend-v1
+          port: 8080
+          weight: 90 # меняем веса
+        - name: backend-v2
+          port: 8080
+          weight: 10 # меняем веса

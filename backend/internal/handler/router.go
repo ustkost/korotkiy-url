@@ -7,6 +7,7 @@ func NewRouter(healthHandler *HealthHandler, linkHandler *LinkHandler, clickHand
 
 	mux.HandleFunc("GET /livez", healthHandler.Live)
 	mux.HandleFunc("GET /readyz", healthHandler.Ready)
+	mux.HandleFunc("GET /version", VersionHandler)
 
 	mux.HandleFunc("POST /links", linkHandler.Create)
 	mux.HandleFunc("GET /links", linkHandler.List)
